@@ -14,6 +14,9 @@ compile: $(REBAR)
 clean: $(REBAR)
 	@$(REBAR) clean
 
+test: $(REBAR) compile
+	@$(REBAR) eunit
+
 examples: eg
 eg:
 	@erlc -I deps -o ebin examples/*.erl
