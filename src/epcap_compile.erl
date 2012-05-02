@@ -74,5 +74,5 @@ progname() ->
                     ?MODULE
                 ]);
         Dir ->
-            Dir
+            filename:join([Dir,?MODULE])
     end.
