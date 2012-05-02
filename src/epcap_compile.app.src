@@ -1,0 +1,3 @@
+{application, epcap_compile,
+    [{description, "Compile PCAP filters to BPF programs"},
+    {vsn, "0.01"}]}.
