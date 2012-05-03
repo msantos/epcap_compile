@@ -28,7 +28,8 @@ These libraries are not required can be used with epcap\_compile:
 
 * procket: https://github.com/msantos/procket.git
 
-  Set the BPF filter on a socket (Linux) or BPF device (BSD).
+  Set a BPF filter on any kind of socket (Linux) or on a BPF device
+  (BSD).
 
 
 ## COMPILING
@@ -62,7 +63,7 @@ These libraries are not required can be used with epcap\_compile:
         compile/1 defaults to optimization enabled, an unspecified netmask
         (filters specifying the broadcast will return an error), the
         datalinktype set to ethernet (DLT_EN10MB) and a packet length
-        of 65535 bytes. See pcap\_compile(7) for the meaning of each of
+        of 65535 bytes. See pcap_compile(7) for the meaning of each of
         these options.
 
 
@@ -103,7 +104,7 @@ The same BPF program can be generated from Erlang by using the bpf module in pro
         ].
 
 
-### Apply a BPF Filter to a Socket (Linux)
+### Apply a BPF Filter to a PF\_PACKET Socket (Linux)
 
     -module(lsf).
     -export([f/0, f/1]).
@@ -127,6 +128,38 @@ The same BPF program can be generated from Erlang by using the bpf module in pro
                 timer:sleep(10),
                 loop(S)
         end.
+
+### Apply a BPF Filter to a TCP Socket (Linux)
+
+    -module(lsf_inet).
+    -export([f/0]).
+
+    f() ->
+        {ok, Fcode} = epcap_compile:compile("tcp and port 443"),
+        unfiltered(Fcode),
+        filtered(Fcode).
+
+    unfiltered(Fcode) when is_list(Fcode) ->
+        {ok, S} = gen_tcp:connect("www.google.com", 80,
+                [binary, {packet, 0}, {active, false}]),
+
+        ok = gen_tcp:send(S, "GET / HTTP/1.0\r\n\r\n"),
+        {ok, R} = gen_tcp:recv(S, 0, 5000),
+        error_logger:info_report([{unfiltered, R}]),
+        ok = gen_tcp:close(S).
+
+    filtered(Fcode) when is_list(Fcode) ->
+        {ok, S} = gen_tcp:connect("www.google.com", 80,
+                [binary, {packet, 0}, {active, false}]),
+
+        {ok, FD} = inet:getfd(S),
+        {ok, _} = packet:filter(FD, Fcode),
+
+        ok = gen_tcp:send(S, "GET / HTTP/1.0\r\n\r\n"),
+        {error, timeout} = gen_tcp:recv(S, 0, 5000),
+        error_logger:info_report([{filtered, "connection timeout"}]),
+
+        ok = gen_tcp:close(S).
 
 
 ## TODO
