@@ -11,6 +11,10 @@ Since the library passes the filter string to pcap\_compile(3PCAP)
 directly, any bugs in pcap\_compile() may cause the Erlang VM to crash. Do
 not use filters from untrusted sources.
 
+Also note very large filters may block the scheduler. For example:
+
+    epcap_compile:compile(string:copies("ip and ", 50000) ++ "ip").
+
 
 ## REQUIREMENTS
 
@@ -18,7 +22,7 @@ not use filters from untrusted sources.
 
   On Ubuntu: sudo apt-get install libpcap-dev
 
-These libraries are not required can be used with epcap\_compile:
+These libraries are not required but can be used with epcap\_compile:
 
 * pkt: https://github.com/msantos/pkt.git
 
@@ -60,11 +64,18 @@ These libraries are not required can be used with epcap\_compile:
         If an error occurs, a string describing the error is returned
         to the caller.
 
-        compile/1 defaults to optimization enabled, an unspecified netmask
-        (filters specifying the broadcast will return an error), the
-        datalinktype set to ethernet (DLT_EN10MB) and a packet length
-        of 65535 bytes. See pcap_compile(7) for the meaning of each of
-        these options.
+        compile/1 defaults to:
+
+            * optimization enabled
+
+            * an unspecified netmask (filters specifying the broadcast
+              will return an error)
+
+            * datalinktype set to ethernet (DLT_EN10MB)
+
+            * a packet length of 65535 byte
+
+        See pcap_compile(7) for information about each of these options.
 
 
 ## EXAMPLES
@@ -161,7 +172,39 @@ The same BPF program can be generated from Erlang by using the bpf module in pro
 
         ok = gen_tcp:close(S).
 
+### Applying a BPF Filter on BSD
+
+
+    -module(bpf_ex).
+    -export([f/0, f/1]).
+
+    f() ->
+        f("ip and ( src host 192.168.10.1 or dst host 192.168.10.1 )").
+
+    f(Filter) ->
+        {ok, Socket, Length} = bpf:open(Dev),
+        {ok, Fcode} = epcap_compile:compile(Filter),
+        {ok, _} = bpf:ctl(Socket, setf, Fcode),
+        loop(Socket, Length).
+
+    loop(Socket, Length) ->
+        case procket:read(Socket, Length) of
+            {ok, <<>>} ->
+                loop(Socket, Length);
+            {ok, Data} ->
+                {bpf_buf, Time, Datalen, Packet, Rest} = bpf:buf(Data),
+                error_logger:info_report([
+                    {time, Time},
+                    {packet_is_truncated, Datalen /= byte_size(Packet)},
+                    {packet, Packet},
+                    {packet_size, byte_size(Packet)},
+                    {remaining, byte_size(Rest)}
+                ]),
+                loop(Socket, Length);
+            {error, eagain} ->
+                timer:sleep(10),
+                loop(Socket, Length)
+        end.
+
 
 ## TODO
-
-* BSD example
