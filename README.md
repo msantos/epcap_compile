@@ -73,9 +73,9 @@ These libraries are not required but can be used with epcap\_compile:
 
             * datalinktype set to ethernet (DLT_EN10MB)
 
-            * a packet length of 65535 byte
+            * a packet length of 65535 bytes
 
-        See pcap_compile(7) for information about each of these options.
+        See pcap_compile(3PCAP) for information about each of these options.
 
 
 ## EXAMPLES
@@ -176,12 +176,12 @@ The same BPF program can be generated from Erlang by using the bpf module in pro
 
 
     -module(bpf_ex).
-    -export([f/0, f/1]).
+    -export([f/1, f/2]).
 
-    f() ->
-        f("ip and ( src host 192.168.10.1 or dst host 192.168.10.1 )").
+    f(Dev) ->
+        f(Dev, "ip and ( src host 192.168.10.1 or dst host 192.168.10.1 )").
 
-    f(Filter) ->
+    f(Dev, Filter) ->
         {ok, Socket, Length} = bpf:open(Dev),
         {ok, Fcode} = epcap_compile:compile(Filter),
         {ok, _} = bpf:ctl(Socket, setf, Fcode),
@@ -205,6 +205,3 @@ The same BPF program can be generated from Erlang by using the bpf module in pro
                 timer:sleep(10),
                 loop(Socket, Length)
         end.
-
-
-## TODO

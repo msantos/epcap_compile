@@ -28,42 +28,44 @@
 %% LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 %% ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 %% POSSIBILITY OF SUCH DAMAGE.
--module(lsf_inet).
--export([f/0]).
+-module(bpf_ex).
+-export([f/0, f/1, f/2]).
 
 f() ->
+    f("en1").
+
+f(Dev) ->
     case os:type() of
-        {unix, linux} ->
-            {ok, Fcode} = epcap_compile:compile("tcp and port 443"),
-            unfiltered(Fcode),
-            filtered(Fcode);
+        {unix, BSD} when BSD == darwin;
+                BSD == freebsd;
+                BSD == netbsd;
+                BSD == openbsd ->
+            f(Dev, "ip and ( src host 192.168.10.1 or dst host 192.168.10.1 )");
         _ ->
             {error, unsupported}
     end.
 
-unfiltered(Fcode) when is_list(Fcode) ->
-    {ok, S} = gen_tcp:connect("www.google.com", 80, [
-                binary,
-                {packet, 0},
-                {active, false}
+f(Dev, Filter) ->
+    {ok, Socket, Length} = bpf:open(Dev),
+    {ok, Fcode} = epcap_compile:compile(Filter),
+    {ok, _} = bpf:ctl(Socket, setf, Fcode),
+    loop(Socket, Length).
+
+loop(Socket, Length) ->
+    case procket:read(Socket, Length) of
+        {ok, <<>>} ->
+            loop(Socket, Length);
+        {ok, Data} ->
+            {bpf_buf, Time, Datalen, Packet, Rest} = bpf:buf(Data),
+            error_logger:info_report([
+                    {time, Time},
+                    {packet_is_truncated, Datalen /= byte_size(Packet)},
+                    {packet, Packet},
+                    {packet_size, byte_size(Packet)},
+                    {remaining, byte_size(Rest)}
                 ]),
-
-    ok = gen_tcp:send(S, "GET / HTTP/1.0\r\n\r\n"),
-    {ok, R} = gen_tcp:recv(S, 0, 5000),
-    error_logger:info_report([{unfiltered, R}]),
-    ok = gen_tcp:close(S).
-
-filtered(Fcode) when is_list(Fcode) ->
-    {ok, S} = gen_tcp:connect("www.google.com", 80, [
-                binary,
-                {packet, 0},
-                {active, false}
-                ]),
-
-    {ok, FD} = inet:getfd(S),
-    {ok, _} = packet:filter(FD, Fcode),
-
-    ok = gen_tcp:send(S, "GET /test HTTP/1.0\r\n\r\n"),
-    {error, timeout} = gen_tcp:recv(S, 0, 5000),
-    error_logger:info_report([{filtered, "connection timeout"}]),
-    ok = gen_tcp:close(S).
+            loop(Socket, Length);
+        {error, eagain} ->
+            timer:sleep(10),
+            loop(Socket, Length)
+    end.
