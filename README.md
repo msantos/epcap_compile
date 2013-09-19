@@ -1,5 +1,5 @@
 epcap\_compile is an Erlang library for compiling PCAP filters to BPF
-programs (see pcap-filter(7)). 
+programs (see pcap-filter(7)).
 
 epcap\_compile uses the NIF interface to wrap pcap\_compile(3PCAP)
 from libpcap.
@@ -45,7 +45,7 @@ These libraries are not required but can be used with epcap\_compile:
 
     compile(Filter) -> {ok, Fcode} | {error, Error}
     compile(Filter, Options) -> {ok, Fcode} | {error, Error}
-    
+
         Types   Filter = string() | binary()
                 Fcode = [ Insn ]
                 Insn = binary()
@@ -97,18 +97,18 @@ The same BPF program can be generated from Erlang by using the bpf module in pro
 
     ip({A,B,C,D}) ->
         IP = (A bsl 24) bor (B bsl 16) bor (C bsl 8) bor D,
-    
+
         [
             % Ethernet
             ?BPF_STMT(?BPF_LD+?BPF_H+?BPF_ABS, 12),                     % offset = Ethernet Type
             ?BPF_JUMP(?BPF_JMP+?BPF_JEQ+?BPF_K, ?ETHERTYPE_IP, 0, 5),   % type = IP
-    
+
             % IP
             ?BPF_STMT(?BPF_LD+?BPF_W+?BPF_ABS, 26),                     % offset = Source IP address
             ?BPF_JUMP(?BPF_JMP+?BPF_JEQ+?BPF_K, IP, 2, 0),              % source = {A,B,C,D}
             ?BPF_STMT(?BPF_LD+?BPF_W+?BPF_ABS, 30),                     % offset = Destination IP address
             ?BPF_JUMP(?BPF_JMP+?BPF_JEQ+?BPF_K, IP, 0, 1),              % destination = {A,B,C,D}
-    
+
             % Amount of packet to return
             ?BPF_STMT(?BPF_RET+?BPF_K, 16#FFFFFFFF),                    % Return up to 2^32-1 bytes
             ?BPF_STMT(?BPF_RET+?BPF_K, 0)                               % Return 0 bytes: drop packet
@@ -119,17 +119,17 @@ The same BPF program can be generated from Erlang by using the bpf module in pro
 
     -module(lsf).
     -export([f/0, f/1]).
-    
+
     f() ->
         {ok, Fcode} = epcap_compile:compile("tcp and ( port 80 or port 443 )"),
         f(Fcode).
-    
+
     f(Fcode) when is_list(Fcode) ->
         {ok, S} = packet:socket(),
         {ok, _} = packet:filter(S, Fcode),
-    
+
         loop(S).
-    
+
     loop(S) ->
         case procket:recv(S, 1500) of
             {ok, Data} ->
