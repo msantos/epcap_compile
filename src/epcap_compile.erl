@@ -44,12 +44,26 @@
 on_load() ->
     erlang:load_nif(progname(), []).
 
+-spec pcap_compile(
+    Filter :: iodata(),
+    Optimize :: 0 | 1,
+    Netmask :: non_neg_integer(),
+    Linktype :: integer(),
+    Snaplen :: integer()) -> {ok, [binary()]} | {error, string()}.
 pcap_compile(_,_,_,_,_) ->
-    erlang:error(not_implemented).
+    erlang:nif_error(not_implemented).
 
+-spec compile(Filter :: iodata()) -> {ok, [binary()]} | {error, string()}.
 compile(Filter) ->
     compile(Filter, []).
 
+-type compile_options() :: [
+        {optimize, true | false} |
+        {netmask, non_neg_integer()} |
+        {dlt, integer()} |
+        {snaplen, integer()}
+    ].
+-spec compile(Filter :: iodata(), compile_options()) -> {ok, [binary()]} | {error, string()}.
 compile(Filter, Options) when is_binary(Filter); is_list(Filter) ->
     Optimize = bool(proplists:get_value(optimize, Options, true)),
     Netmask = mask(proplists:get_value(netmask, Options, ?PCAP_NETMASK_UNKNOWN)),
