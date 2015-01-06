@@ -29,9 +29,8 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <pcap.h>
-#include <string.h>
 #include "erl_nif.h"
+#include "epcap_compile.h"
 
 
 static ERL_NIF_TERM atom_ok;
