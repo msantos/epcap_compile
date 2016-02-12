@@ -1,4 +1,4 @@
-%% Copyright (c) 2012-2015, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2012-2016, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@ on_load() ->
 -spec pcap_compile(
     Filter :: iodata(),
     Optimize :: 0 | 1,
-    Netmask :: non_neg_integer(),
+    Netmask :: non_neg_integer() | {byte(),byte(),byte(),byte()},
     Linktype :: integer(),
     Snaplen :: integer()) -> {ok, [binary()]} | {error, string()}.
 pcap_compile(_,_,_,_,_) ->
