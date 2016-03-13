@@ -28,13 +28,21 @@
 %% LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 %% ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 %% POSSIBILITY OF SUCH DAMAGE.
--module(epcap_compile_tests).
+-module(epcap_compile_SUITE).
+-include_lib("common_test/include/ct.hrl").
 
--compile(export_all).
+-export([
+        all/0
+    ]).
+-export([
+        compile/1,
+        compile_linktype/1
+    ]).
 
--include_lib("eunit/include/eunit.hrl").
+all() ->
+    [compile, compile_linktype].
 
-compile_test() ->
+compile(_Config) ->
     {ok,[<<40,0,0,0,12,0,0,0>>,
          <<21,0,0,5,0,8,0,0>>,
          <<32,0,0,0,26,0,0,0>>,
@@ -46,7 +54,7 @@ compile_test() ->
             "ip and ( src host 192.168.10.1 or dst host 192.168.10.1 )"
             ).
 
-compile_linktype_test() ->
+compile_linktype(_Config) ->
     DLT_SLIP = 8,
     Filter = "inbound or ( outbound and portrange 40000-41000 )",
 
