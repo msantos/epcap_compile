@@ -38,7 +38,7 @@ These libraries are not required but can be used with epcap\_compile:
 
 ## COMPILING
 
-    make
+    rebar3 compile
 
 
 ## EXPORTS
