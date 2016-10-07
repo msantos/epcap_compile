@@ -60,7 +60,7 @@ upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_NIF_TERM loa
     return 0;
 }
 
-    void
+    static void
 unload(ErlNifEnv* env, void* priv_data)
 {
 }
