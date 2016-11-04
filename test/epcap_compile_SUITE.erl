@@ -58,7 +58,7 @@ compile_linktype(_Config) ->
     DLT_SLIP = 8,
     Filter = "inbound or ( outbound and portrange 40000-41000 )",
 
-    {ok,[<<48,0,0,0,0,0,0,0>>,
+    Result = {ok,[<<48,0,0,0,0,0,0,0>>,
          <<21,0,25,0,0,0,0,0>>,
          <<84,0,0,0,240,0,0,0>>,
          <<21,0,0,9,96,0,0,0>>,
@@ -86,4 +86,6 @@ compile_linktype(_Config) ->
          <<53,0,0,2,64,156,0,0>>,
          <<37,0,1,0,40,160,0,0>>,
          <<6,0,0,0,255,255,0,0>>,
-         <<6,0,0,0,0,0,0,0>>]} = epcap_compile:compile(Filter, [{dlt, DLT_SLIP}]).
+         <<6,0,0,0,0,0,0,0>>]},
+
+    Result = epcap_compile:compile(Filter, [{dlt, DLT_SLIP}]).

@@ -47,10 +47,10 @@ on_load() ->
 -spec pcap_compile(
     Filter :: iodata(),
     Optimize :: 0 | 1,
-    Netmask :: non_neg_integer() | {byte(),byte(),byte(),byte()},
+    Netmask :: non_neg_integer() | {byte(), byte(), byte(), byte()},
     Linktype :: integer(),
     Snaplen :: integer()) -> {ok, [binary()]} | {error, string()}.
-pcap_compile(_,_,_,_,_) ->
+pcap_compile(_, _, _, _, _) ->
     erlang:nif_error(not_implemented).
 
 -spec compile(Filter :: iodata()) -> {ok, [binary()]} | {error, string()}.
@@ -63,10 +63,12 @@ compile(Filter) ->
         {dlt, integer()} |
         {snaplen, integer()}
     ].
--spec compile(Filter :: iodata(), compile_options()) -> {ok, [binary()]} | {error, string()}.
+-spec compile(Filter :: iodata(), compile_options())
+    -> {ok, [binary()]} | {error, string()}.
 compile(Filter, Options) when is_binary(Filter); is_list(Filter) ->
     Optimize = bool(proplists:get_value(optimize, Options, true)),
-    Netmask = mask(proplists:get_value(netmask, Options, ?PCAP_NETMASK_UNKNOWN)),
+    Netmask = mask(proplists:get_value(netmask, Options,
+            ?PCAP_NETMASK_UNKNOWN)),
     Linktype = proplists:get_value(dlt, Options, ?DLT_EN10MB),
     Snaplen = proplists:get_value(snaplen, Options, 16#ffff),
 
@@ -76,11 +78,11 @@ bool(true) -> 1;
 bool(false) -> 0.
 
 mask(N) when is_integer(N) -> N;
-mask({A,B,C,D}) -> (A bsl 24) bor (B bsl 16) bor (C bsl 8) bor D.
+mask({A, B, C, D}) -> (A bsl 24) bor (B bsl 16) bor (C bsl 8) bor D.
 
 progname() ->
     case code:priv_dir(?MODULE) of
-        {error,bad_name} ->
+        {error, bad_name} ->
             filename:join([
                 filename:dirname(code:which(?MODULE)),
                     "..",
@@ -88,5 +90,5 @@ progname() ->
                     ?MODULE
                 ]);
         Dir ->
-            filename:join([Dir,?MODULE])
+            filename:join([Dir, ?MODULE])
     end.
