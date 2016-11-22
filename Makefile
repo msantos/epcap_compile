@@ -1,3 +1,5 @@
+.PHONY: all compile clean test examples eg dialyzer
+
 REBAR ?= rebar3
 
 all: compile
@@ -14,8 +16,6 @@ test:
 examples: eg
 eg:
 	@erlc -I deps -o ebin examples/*.erl
-
-.PHONY: test dialyzer clean
 
 dialyzer:
 	@$(REBAR) dialyzer
