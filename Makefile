@@ -1,4 +1,4 @@
-.PHONY: all compile clean test examples eg dialyzer
+.PHONY: all compile clean test examples eg dialyzer typer
 
 REBAR ?= rebar3
 
@@ -19,3 +19,9 @@ eg:
 
 dialyzer:
 	@$(REBAR) dialyzer
+
+typer:
+	@typer -pa _build/default/lib/epcap_compile/ebin \
+		   -I include \
+		   --plt _build/default/*_plt \
+		   -r ./src
