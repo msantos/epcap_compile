@@ -1,6 +1,7 @@
-.PHONY: all compile clean test examples eg dialyzer typer
+.PHONY: all compile clean test examples eg dialyzer typer lint
 
 REBAR ?= rebar3
+ELVIS ?= elvis
 
 all: compile
 
@@ -25,3 +26,6 @@ typer:
 		   -I include \
 		   --plt _build/default/*_plt \
 		   -r ./src
+
+lint:
+	@$(ELVIS) rock
