@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, Michael Santos <michael.santos@gmail.com>
+/* Copyright (c) 2012-2017, Michael Santos <michael.santos@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,13 +37,28 @@ static ERL_NIF_TERM atom_ok;
 static ERL_NIF_TERM atom_error;
 static ERL_NIF_TERM atom_enomem;
 
+typedef struct {
+    ErlNifMutex *lock;
+} epcap_compile_priv_t;
 
     static int
 load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
 {
+    epcap_compile_priv_t *priv = NULL;
+
     atom_ok = enif_make_atom(env, "ok");
     atom_error = enif_make_atom(env, "error");
     atom_enomem = enif_make_atom(env, "enomem");
+
+    priv = enif_alloc(sizeof(epcap_compile_priv_t));
+    if (priv == NULL)
+        return -1;
+
+    priv->lock = enif_mutex_create("ewpcap_lock");
+    if (priv->lock == NULL)
+        return -1;
+
+    *priv_data = priv;
 
     return 0;
 }
@@ -63,11 +78,15 @@ upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_NIF_TERM loa
     static void
 unload(ErlNifEnv* env, void* priv_data)
 {
+    epcap_compile_priv_t *priv = priv_data;
+    enif_mutex_destroy(priv->lock);
+    enif_free(priv);
 }
 
     static ERL_NIF_TERM
 nif_pcap_compile(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
+    epcap_compile_priv_t *priv = NULL;
     ErlNifBinary filter = {0};
     int optimize = 0;
     u_int32_t netmask = 0;
@@ -80,7 +99,9 @@ nif_pcap_compile(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     int i = 0;
     ERL_NIF_TERM insns = {0};
     ERL_NIF_TERM res = {0};
+    int rv = 0;
 
+    priv = enif_priv_data(env);
 
     if (!enif_inspect_iolist_as_binary(env, argv[0], &filter))
         return enif_make_badarg(env);
@@ -108,8 +129,13 @@ nif_pcap_compile(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     if (p == NULL)
         return enif_make_tuple2(env, atom_error, atom_enomem);
 
-    if (pcap_compile(p, &fp, (const char *)filter.data,
-                optimize, netmask) != 0) {
+    enif_mutex_lock(priv->lock);
+
+    rv = pcap_compile(p, &fp, (const char *)filter.data, optimize, netmask);
+
+    enif_mutex_unlock(priv->lock);
+
+    if (rv != 0) {
         res = enif_make_tuple2(env,
                 atom_error,
                 enif_make_string(env, pcap_geterr(p), ERL_NIF_LATIN1));
