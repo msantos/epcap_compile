@@ -52,15 +52,25 @@ load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
 
     priv = enif_alloc(sizeof(epcap_compile_priv_t));
     if (priv == NULL)
-        return -1;
+        goto EPCAP_COMPILE_ERROR;
 
-    priv->lock = enif_mutex_create("ewpcap_lock");
+    priv->lock = enif_mutex_create("epcap_compile_lock");
     if (priv->lock == NULL)
-        return -1;
+        goto EPCAP_COMPILE_ERROR;
 
     *priv_data = priv;
 
     return 0;
+
+EPCAP_COMPILE_ERROR:
+    if (priv) {
+        if (priv->lock)
+            enif_mutex_destroy(priv->lock);
+
+        enif_free(priv);
+    }
+
+    return -1;
 }
 
     static int
@@ -79,8 +89,12 @@ upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_NIF_TERM loa
 unload(ErlNifEnv* env, void* priv_data)
 {
     epcap_compile_priv_t *priv = priv_data;
-    enif_mutex_destroy(priv->lock);
-    enif_free(priv);
+    if (priv) {
+        if (priv->lock)
+            enif_mutex_destroy(priv->lock);
+
+        enif_free(priv);
+    }
 }
 
     static ERL_NIF_TERM
