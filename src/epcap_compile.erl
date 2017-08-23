@@ -1,4 +1,4 @@
-%% Copyright (c) 2012-2016, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2012-2017, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,8 @@ compile(Filter) ->
         {optimize, true | false} |
         {netmask, non_neg_integer()} |
         {dlt, integer()} |
-        {snaplen, integer()}
+        {snaplen, integer()} |
+        {limit, integer()}
     ].
 -spec compile(Filter :: iodata(), compile_options())
     -> {ok, [binary()]} | {error, string()}.
@@ -71,8 +72,14 @@ compile(Filter, Options) when is_binary(Filter); is_list(Filter) ->
             ?PCAP_NETMASK_UNKNOWN)),
     Linktype = proplists:get_value(dlt, Options, ?DLT_EN10MB),
     Snaplen = proplists:get_value(snaplen, Options, 16#ffff),
+    Limit = proplists:get_value(limit, Options, 8192),
 
-    pcap_compile(Filter, Optimize, Netmask, Linktype, Snaplen).
+    case iolist_size(Filter) < Limit orelse Limit < 0 of
+        true ->
+            pcap_compile(Filter, Optimize, Netmask, Linktype, Snaplen);
+        false ->
+            {error, enomem}
+    end.
 
 bool(true) -> 1;
 bool(false) -> 0.

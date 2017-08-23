@@ -11,10 +11,13 @@ Since the library passes the filter string to pcap\_compile(3PCAP)
 directly, any bugs in pcap\_compile() may cause the Erlang VM to crash. Do
 not use filters from untrusted sources.
 
-Also note very large filters may block the scheduler. For example:
+Also note very large filters may block the scheduler or cause a stack
+overflow. For example:
 
     epcap_compile:compile(string:copies("ip and ", 50000) ++ "ip").
 
+Filters larger than 8192 bytes will not be be allowed by default. See the
+`limit` option to compile/2.
 
 ## REQUIREMENTS
 
@@ -55,6 +58,7 @@ These libraries are not required but can be used with epcap\_compile:
                     | {netmask, IPaddr}
                     | {dlt, integer()}
                     | {snaplen, integer()}
+                    | {limit, integer()}
 
         Filter is a string in pcap-filter(7) format.
 
@@ -74,6 +78,10 @@ These libraries are not required but can be used with epcap\_compile:
             * datalinktype set to ethernet (DLT_EN10MB)
 
             * a packet length of 65535 bytes
+
+            * a limit of 8192 bytes for filters. Filters larger than
+              this limit will return `{error, enomem}`. A limit less than
+              0 disables the length check.
 
         See pcap_compile(3PCAP) for information about each of these options.
 
