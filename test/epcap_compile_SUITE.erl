@@ -1,4 +1,4 @@
-%% Copyright (c) 2012-2016, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2012-2017, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -36,11 +36,14 @@
     ]).
 -export([
         compile/1,
-        compile_linktype/1
+        compile_linktype/1,
+        error_filter/1,
+        large_filter1/1,
+        large_filter2/1
     ]).
 
 all() ->
-    [compile, compile_linktype].
+    [compile, compile_linktype, error_filter, large_filter1, large_filter2].
 
 compile(_Config) ->
     {ok,[<<40,0,0,0,12,0,0,0>>,
@@ -89,3 +92,20 @@ compile_linktype(_Config) ->
          <<6,0,0,0,0,0,0,0>>]},
 
     Result = epcap_compile:compile(Filter, [{dlt, DLT_SLIP}]).
+
+error_filter(_Config) ->
+    Filter = "ip and ",
+    {error, Error} = epcap_compile:compile(Filter),
+    true = is_list(Error),
+    ok.
+
+large_filter1(_Config) ->
+    Filter = string:copies("ip and not ", 50000),
+    {error, Error} = epcap_compile:compile(Filter, [{limit, -1}]),
+    true = is_list(Error),
+    ok.
+
+large_filter2(_Config) ->
+    Filter = string:copies("ip and ", 50000) ++ "ip",
+    {error, enomem} = epcap_compile:compile(Filter),
+    ok.
