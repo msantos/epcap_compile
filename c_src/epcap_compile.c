@@ -165,6 +165,7 @@ nif_pcap_compile(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
         if (!enif_alloc_binary(sizeof(struct bpf_insn), &fcode)) {
             res = enif_make_tuple2(env, atom_error, atom_enomem);
+            pcap_freecode(&fp);
             goto ERR;
         }
 
@@ -173,6 +174,7 @@ nif_pcap_compile(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
     }
 
     res = enif_make_tuple2(env, atom_ok, insns);
+    pcap_freecode(&fp);
 
 ERR:
     pcap_close(p);
