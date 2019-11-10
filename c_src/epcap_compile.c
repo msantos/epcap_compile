@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, Michael Santos <michael.santos@gmail.com>
+/* Copyright (c) 2012-2019, Michael Santos <michael.santos@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,159 +29,148 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "erl_nif.h"
 #include "epcap_compile.h"
-
+#include "erl_nif.h"
 
 static ERL_NIF_TERM atom_ok;
 static ERL_NIF_TERM atom_error;
 static ERL_NIF_TERM atom_enomem;
 
 typedef struct {
-    ErlNifMutex *lock;
+  ErlNifMutex *lock;
 } epcap_compile_priv_t;
 
-    static int
-load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
-{
-    epcap_compile_priv_t *priv = NULL;
+static int load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info) {
+  epcap_compile_priv_t *priv = NULL;
 
-    atom_ok = enif_make_atom(env, "ok");
-    atom_error = enif_make_atom(env, "error");
-    atom_enomem = enif_make_atom(env, "enomem");
+  atom_ok = enif_make_atom(env, "ok");
+  atom_error = enif_make_atom(env, "error");
+  atom_enomem = enif_make_atom(env, "enomem");
 
-    priv = enif_alloc(sizeof(epcap_compile_priv_t));
-    if (priv == NULL)
-        goto EPCAP_COMPILE_ERROR;
+  priv = enif_alloc(sizeof(epcap_compile_priv_t));
+  if (priv == NULL)
+    goto EPCAP_COMPILE_ERROR;
 
-    priv->lock = enif_mutex_create("epcap_compile_lock");
-    if (priv->lock == NULL)
-        goto EPCAP_COMPILE_ERROR;
+  priv->lock = enif_mutex_create("epcap_compile_lock");
+  if (priv->lock == NULL)
+    goto EPCAP_COMPILE_ERROR;
 
-    *priv_data = priv;
+  *priv_data = priv;
 
-    return 0;
+  return 0;
 
 EPCAP_COMPILE_ERROR:
-    if (priv) {
-        if (priv->lock)
-            enif_mutex_destroy(priv->lock);
+  if (priv) {
+    if (priv->lock)
+      enif_mutex_destroy(priv->lock);
 
-        enif_free(priv);
-    }
+    enif_free(priv);
+  }
 
-    return -1;
+  return -1;
 }
 
-    static int
-reload(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
-{
-    return 0;
+static int reload(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info) {
+  return 0;
 }
 
-    static int
-upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_NIF_TERM load_info)
-{
-    return 0;
+static int upgrade(ErlNifEnv *env, void **priv_data, void **old_priv_data,
+                   ERL_NIF_TERM load_info) {
+  return 0;
 }
 
-    static void
-unload(ErlNifEnv* env, void* priv_data)
-{
-    epcap_compile_priv_t *priv = priv_data;
-    if (priv) {
-        if (priv->lock)
-            enif_mutex_destroy(priv->lock);
+static void unload(ErlNifEnv *env, void *priv_data) {
+  epcap_compile_priv_t *priv = priv_data;
+  if (priv) {
+    if (priv->lock)
+      enif_mutex_destroy(priv->lock);
 
-        enif_free(priv);
-    }
+    enif_free(priv);
+  }
 }
 
-    static ERL_NIF_TERM
-nif_pcap_compile(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
-{
-    epcap_compile_priv_t *priv = NULL;
-    ErlNifBinary filter = {0};
-    int optimize = 0;
-    u_int32_t netmask = 0;
-    int linktype = 0;
-    int snaplen = 0;
+static ERL_NIF_TERM nif_pcap_compile(ErlNifEnv *env, int argc,
+                                     const ERL_NIF_TERM argv[]) {
+  epcap_compile_priv_t *priv = NULL;
+  ErlNifBinary filter = {0};
+  int optimize = 0;
+  u_int32_t netmask = 0;
+  int linktype = 0;
+  int snaplen = 0;
 
-    pcap_t *p = NULL;
-    struct bpf_program fp = {0};
+  pcap_t *p = NULL;
+  struct bpf_program fp = {0};
 
-    int i = 0;
-    ERL_NIF_TERM insns = {0};
-    ERL_NIF_TERM res = {0};
-    int rv = 0;
+  int i = 0;
+  ERL_NIF_TERM insns = {0};
+  ERL_NIF_TERM res = {0};
+  int rv = 0;
 
-    priv = enif_priv_data(env);
+  priv = enif_priv_data(env);
 
-    if (!enif_inspect_iolist_as_binary(env, argv[0], &filter))
-        return enif_make_badarg(env);
+  if (!enif_inspect_iolist_as_binary(env, argv[0], &filter))
+    return enif_make_badarg(env);
 
-    if (!enif_get_int(env, argv[1], &optimize))
-        return enif_make_badarg(env);
+  if (!enif_get_int(env, argv[1], &optimize))
+    return enif_make_badarg(env);
 
-    if (!enif_get_uint(env, argv[2], &netmask))
-        return enif_make_badarg(env);
+  if (!enif_get_uint(env, argv[2], &netmask))
+    return enif_make_badarg(env);
 
-    if (!enif_get_int(env, argv[3], &linktype))
-        return enif_make_badarg(env);
+  if (!enif_get_int(env, argv[3], &linktype))
+    return enif_make_badarg(env);
 
-    if (!enif_get_int(env, argv[4], &snaplen))
-        return enif_make_badarg(env);
+  if (!enif_get_int(env, argv[4], &snaplen))
+    return enif_make_badarg(env);
 
-    /* NULL terminate the filter */
-    if (!enif_realloc_binary(&filter, filter.size+1))
-        return enif_make_tuple2(env, atom_error, atom_enomem);
+  /* NULL terminate the filter */
+  if (!enif_realloc_binary(&filter, filter.size + 1))
+    return enif_make_tuple2(env, atom_error, atom_enomem);
 
-    filter.data[filter.size-1] = '\0';
+  filter.data[filter.size - 1] = '\0';
 
-    p = pcap_open_dead(linktype, snaplen);
+  p = pcap_open_dead(linktype, snaplen);
 
-    if (p == NULL)
-        return enif_make_tuple2(env, atom_error, atom_enomem);
+  if (p == NULL)
+    return enif_make_tuple2(env, atom_error, atom_enomem);
 
-    enif_mutex_lock(priv->lock);
+  enif_mutex_lock(priv->lock);
 
-    rv = pcap_compile(p, &fp, (const char *)filter.data, optimize, netmask);
+  rv = pcap_compile(p, &fp, (const char *)filter.data, optimize, netmask);
 
-    enif_mutex_unlock(priv->lock);
+  enif_mutex_unlock(priv->lock);
 
-    if (rv != 0) {
-        res = enif_make_tuple2(env,
-                atom_error,
-                enif_make_string(env, pcap_geterr(p), ERL_NIF_LATIN1));
-        goto ERR;
+  if (rv != 0) {
+    res = enif_make_tuple2(
+        env, atom_error, enif_make_string(env, pcap_geterr(p), ERL_NIF_LATIN1));
+    goto ERR;
+  }
+
+  insns = enif_make_list(env, 0);
+
+  /* Build the list from the end of the buffer, so the list does
+   * not need to be reversed. */
+  for (i = fp.bf_len - 1; i >= 0; i--) {
+    ErlNifBinary fcode = {0};
+
+    if (!enif_alloc_binary(sizeof(struct bpf_insn), &fcode)) {
+      res = enif_make_tuple2(env, atom_error, atom_enomem);
+      pcap_freecode(&fp);
+      goto ERR;
     }
 
-    insns = enif_make_list(env, 0);
+    (void)memcpy(fcode.data, fp.bf_insns + i, fcode.size);
+    insns = enif_make_list_cell(env, enif_make_binary(env, &fcode), insns);
+  }
 
-    /* Build the list from the end of the buffer, so the list does
-     * not need to be reversed. */
-    for (i = fp.bf_len-1; i >= 0; i--) {
-        ErlNifBinary fcode = {0};
-
-        if (!enif_alloc_binary(sizeof(struct bpf_insn), &fcode)) {
-            res = enif_make_tuple2(env, atom_error, atom_enomem);
-            pcap_freecode(&fp);
-            goto ERR;
-        }
-
-        (void)memcpy(fcode.data, fp.bf_insns+i, fcode.size);
-        insns = enif_make_list_cell(env, enif_make_binary(env, &fcode), insns);
-    }
-
-    res = enif_make_tuple2(env, atom_ok, insns);
-    pcap_freecode(&fp);
+  res = enif_make_tuple2(env, atom_ok, insns);
+  pcap_freecode(&fp);
 
 ERR:
-    pcap_close(p);
+  pcap_close(p);
 
-    return res;
+  return res;
 }
-
 
 static ErlNifFunc nif_funcs[] = {
     {"pcap_compile", 5, nif_pcap_compile},
