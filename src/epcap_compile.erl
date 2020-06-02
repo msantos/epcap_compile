@@ -1,4 +1,4 @@
-%% Copyright (c) 2012-2017, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2012-2020, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,15 @@
 -module(epcap_compile).
 
 -export([
-    compile/1, compile/2
-    ]).
+    compile/1,
+    compile/2
+]).
 
 -define(PCAP_NETMASK_UNKNOWN, 16#ffffffff).
+
 -define(DLT_EN10MB, 1).
 
-
 -on_load(on_load/0).
-
 
 on_load() ->
     erlang:load_nif(progname(), []).
@@ -49,7 +49,9 @@ on_load() ->
     Optimize :: 0 | 1,
     Netmask :: non_neg_integer() | {byte(), byte(), byte(), byte()},
     Linktype :: integer(),
-    Snaplen :: integer()) -> {ok, [binary()]} | {error, string()}.
+    Snaplen :: integer()
+) ->
+    {ok, [binary()]} | {error, string()}.
 pcap_compile(_, _, _, _, _) ->
     erlang:nif_error(not_implemented).
 
@@ -58,18 +60,18 @@ compile(Filter) ->
     compile(Filter, []).
 
 -type compile_options() :: [
-        {optimize, true | false} |
-        {netmask, non_neg_integer()} |
-        {dlt, integer()} |
-        {snaplen, integer()} |
-        {limit, integer()}
-    ].
--spec compile(Filter :: iodata(), compile_options())
-    -> {ok, [binary()]} | {error, string()}.
+    {optimize, true | false} |
+    {netmask, non_neg_integer()} |
+    {dlt, integer()} |
+    {snaplen, integer()} |
+    {limit, integer()}
+].
+
+-spec compile(Filter :: iodata(), compile_options()) ->
+    {ok, [binary()]} | {error, string()}.
 compile(Filter, Options) when is_binary(Filter); is_list(Filter) ->
     Optimize = bool(proplists:get_value(optimize, Options, true)),
-    Netmask = mask(proplists:get_value(netmask, Options,
-            ?PCAP_NETMASK_UNKNOWN)),
+    Netmask = mask(proplists:get_value(netmask, Options, ?PCAP_NETMASK_UNKNOWN)),
     Linktype = proplists:get_value(dlt, Options, ?DLT_EN10MB),
     Snaplen = proplists:get_value(snaplen, Options, 16#ffff),
     Limit = proplists:get_value(limit, Options, 8192),
@@ -92,10 +94,10 @@ progname() ->
         {error, bad_name} ->
             filename:join([
                 filename:dirname(code:which(?MODULE)),
-                    "..",
-                    "priv",
-                    ?MODULE
-                ]);
+                "..",
+                "priv",
+                ?MODULE
+            ]);
         Dir ->
             filename:join([Dir, ?MODULE])
     end.
