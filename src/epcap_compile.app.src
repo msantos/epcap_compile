@@ -1,10 +1,10 @@
-{application, epcap_compile,
-    [{description, "Compile PCAP filters to BPF programs"},
-     {vsn, "1.0.2"},
+{application, epcap_compile, [
+    {description, "Compile PCAP filters to BPF programs"},
+    {vsn, "1.0.2"},
 
-     {licenses, ["BSD-3"]},
-     {maintainers, ["Michael Santos"]},
-     {links, [
-         {"Github", "https://github.com/msantos/epcap_compile"}
-      ]}
+    {licenses, ["BSD-3"]},
+    {maintainers, ["Michael Santos"]},
+    {links, [
+        {"Github", "https://github.com/msantos/epcap_compile"}
+    ]}
 ]}.
