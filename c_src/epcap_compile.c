@@ -101,7 +101,7 @@ static ERL_NIF_TERM nif_pcap_compile(ErlNifEnv *env, int argc,
   pcap_t *p = NULL;
   struct bpf_program fp = {0};
 
-  int i = 0;
+  unsigned int i;
   ERL_NIF_TERM insns = {0};
   ERL_NIF_TERM res = {0};
   int rv = 0;
@@ -150,7 +150,8 @@ static ERL_NIF_TERM nif_pcap_compile(ErlNifEnv *env, int argc,
 
   /* Build the list from the end of the buffer, so the list does
    * not need to be reversed. */
-  for (i = fp.bf_len - 1; i >= 0; i--) {
+  i = fp.bf_len;
+  while (i--) {
     ErlNifBinary fcode = {0};
 
     if (!enif_alloc_binary(sizeof(struct bpf_insn), &fcode)) {
