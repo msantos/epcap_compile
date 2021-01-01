@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2019, Michael Santos <michael.santos@gmail.com>
+/* Copyright (c) 2012-2021, Michael Santos <michael.santos@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ typedef struct {
 } epcap_compile_priv_t;
 
 static int load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info) {
-  epcap_compile_priv_t *priv = NULL;
+  epcap_compile_priv_t *priv;
 
   atom_ok = enif_make_atom(env, "ok");
   atom_error = enif_make_atom(env, "error");
@@ -91,20 +91,20 @@ static void unload(ErlNifEnv *env, void *priv_data) {
 
 static ERL_NIF_TERM nif_pcap_compile(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
-  epcap_compile_priv_t *priv = NULL;
+  epcap_compile_priv_t *priv;
   ErlNifBinary filter = {0};
-  int optimize = 0;
-  u_int32_t netmask = 0;
-  int linktype = 0;
-  int snaplen = 0;
+  int optimize;
+  u_int32_t netmask;
+  int linktype;
+  int snaplen;
 
-  pcap_t *p = NULL;
+  pcap_t *p;
   struct bpf_program fp = {0};
 
   unsigned int i;
   ERL_NIF_TERM insns = {0};
   ERL_NIF_TERM res = {0};
-  int rv = 0;
+  int rv;
 
   priv = enif_priv_data(env);
 
