@@ -60,6 +60,8 @@ These libraries are not required but can be used with epcap\_compile:
                     | {snaplen, integer()}
                     | {limit, integer()}
 
+        Compile a PCAP filter to a BPF program.
+
         Filter is a string in pcap-filter(7) format.
 
         If the PCAP filter is successfully compiled to a BPF program,
@@ -83,8 +85,7 @@ These libraries are not required but can be used with epcap\_compile:
               this limit will return `{error, enomem}`. A limit less than
               0 disables the length check.
 
-        See pcap_compile(3PCAP) for information about each of these options.
-
+        See pcap_compile(3PCAP) for documentation about each option.
 
 ## EXAMPLES
 
