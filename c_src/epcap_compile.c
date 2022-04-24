@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2021, Michael Santos <michael.santos@gmail.com>
+/* Copyright (c) 2012-2022, Michael Santos <michael.santos@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,12 +81,14 @@ static int upgrade(ErlNifEnv *env, void **priv_data, void **old_priv_data,
 
 static void unload(ErlNifEnv *env, void *priv_data) {
   epcap_compile_priv_t *priv = priv_data;
-  if (priv) {
-    if (priv->lock)
-      enif_mutex_destroy(priv->lock);
 
-    enif_free(priv);
-  }
+  if (!priv)
+    return;
+
+  if (priv->lock)
+    enif_mutex_destroy(priv->lock);
+
+  enif_free(priv);
 }
 
 static ERL_NIF_TERM nif_pcap_compile(ErlNifEnv *env, int argc,
