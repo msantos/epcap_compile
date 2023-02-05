@@ -6,10 +6,12 @@ f() ->
 
 f(Dev) ->
     case os:type() of
-        {unix, BSD} when BSD == darwin;
-                BSD == freebsd;
-                BSD == netbsd;
-                BSD == openbsd ->
+        {unix, BSD} when
+            BSD == darwin;
+            BSD == freebsd;
+            BSD == netbsd;
+            BSD == openbsd
+        ->
             f(Dev, "ip and ( src host 192.168.10.1 or dst host 192.168.10.1 )");
         _ ->
             {error, unsupported}
@@ -28,12 +30,12 @@ loop(Socket, Length) ->
         {ok, Data} ->
             {bpf_buf, Time, Datalen, Packet, Rest} = bpf:buf(Data),
             error_logger:info_report([
-                    {time, Time},
-                    {packet_is_truncated, Datalen /= byte_size(Packet)},
-                    {packet, Packet},
-                    {packet_size, byte_size(Packet)},
-                    {remaining, byte_size(Rest)}
-                ]),
+                {time, Time},
+                {packet_is_truncated, Datalen /= byte_size(Packet)},
+                {packet, Packet},
+                {packet_size, byte_size(Packet)},
+                {remaining, byte_size(Rest)}
+            ]),
             loop(Socket, Length);
         {error, eagain} ->
             timer:sleep(10),
