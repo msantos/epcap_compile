@@ -1,4 +1,4 @@
-%%% @copyright 2012-2022 Michael Santos <michael.santos@gmail.com>
+%%% @copyright 2012-2023 Michael Santos <michael.santos@gmail.com>
 
 %%% All rights reserved.
 %%%
@@ -72,6 +72,21 @@ pcap_compile(_, _, _, _, _) ->
 % * a limit of 8192 bytes for filters. Filters larger than this limit
 %   will return `{error, enomem}'. A limit less than 0 disables the
 %   length check.
+%
+% == Examples ==
+%
+% ```
+% 1> epcap_compile:compile("ip and ( src host 192.168.10.1 or dst host 192.168.10.
+% 1 )").
+% {ok,[<<40,0,0,0,12,0,0,0>>,
+%      <<21,0,0,5,0,8,0,0>>,
+%      <<32,0,0,0,26,0,0,0>>,
+%      <<21,0,2,0,1,10,168,192>>,
+%      <<32,0,0,0,30,0,0,0>>,
+%      <<21,0,0,1,1,10,168,192>>,
+%      <<6,0,0,0,255,255,0,0>>,
+%      <<6,0,0,0,0,0,0,0>>]}
+% '''
 -spec compile(Filter :: iodata()) -> {ok, [binary()]} | {error, string()}.
 compile(Filter) ->
     compile(Filter, []).
